@@ -187,33 +187,39 @@ document.getElementById('btn-link').addEventListener('click', async () => {
     return;
   }
 
-  // 1. Vincular ambos en la base de datos
+  // 1. Vincular ambos en la DB
   await sb.from('profiles').update({ partner_id: partnerProfile.id }).eq('id', myProfile.id);
   await sb.from('profiles').update({ partner_id: myProfile.id }).eq('id', partnerProfile.id);
 
-  // 2. Notificar a la otra persona via broadcast
-  //    Nos suscribimos a SU canal y le enviamos el evento "linked"
+  // 2. Enviar broadcast al canal de la otra persona
+  //    Reintentamos hasta 5 veces con 600ms entre intentos
+  //    para asegurar que el mensaje llega aunque la suscripción tarde
   const notifyChannel = sb.channel(`link:${partnerProfile.id}`, {
     config: { broadcast: { self: false } },
   });
 
+  let attempts = 0;
   await new Promise((resolve) => {
     notifyChannel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
-        await notifyChannel.send({
-          type: 'broadcast',
-          event: 'linked',
-          payload: { partner_id: myProfile.id },
-        });
-        resolve();
+        const sendOnce = async () => {
+          attempts++;
+          await notifyChannel.send({
+            type: 'broadcast',
+            event: 'linked',
+            payload: { partner_id: myProfile.id },
+          });
+          if (attempts < 5) setTimeout(sendOnce, 600);
+          else resolve();
+        };
+        sendOnce();
       }
     });
   });
 
-  // Pequeña espera para asegurar que el mensaje llega antes de limpiar
-  setTimeout(() => sb.removeChannel(notifyChannel), 1500);
+  setTimeout(() => sb.removeChannel(notifyChannel), 4000);
 
-  // 3. Actualizar estado local y pasar a pantalla principal
+  // 3. Pasar a pantalla principal
   window.authState.profile.partner_id = partnerProfile.id;
   await window.appCore?.startMain?.();
   showScreen('main');
