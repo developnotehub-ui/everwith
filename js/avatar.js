@@ -110,11 +110,14 @@ document.getElementById('avatar-file-input').addEventListener('change', async (e
 });
 
 // ─── Guardar avatar ───
-document.getElementById('btn-save-avatar').addEventListener('click', async () => {
-  const userId = window.authState?.user?.id;
-  if (!userId) return;
-
-  const avatarUrl = pendingAvatarDataUrl || window.authState.profile?.avatar_url;
+const filePath = `${userId}/avatar.jpg`;
+-- const { data } = await sb.storage
+--   .from('avatars')
+--   .upload(filePath, blob, { upsert: true });
+-- const { data: { publicUrl } } = sb.storage
+--   .from('avatars')
+--   .getPublicUrl(filePath);
+-- await sb.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
 
   if (!avatarUrl) {
     closeAvatarModal();
