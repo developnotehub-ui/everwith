@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>everwith</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════
+       PANTALLA DE LOGIN
+  ════════════════════════════════════════════ -->
+  <div id="screen-login" class="screen">
+    <div class="login-wrap">
+      <div class="brand">
+        <span class="brand-name">everwith</span>
+        <span class="brand-tagline" data-i18n="tagline">siempre contigo, sin ruido</span>
+      </div>
+
+      <div class="login-form">
+        <input type="email" id="login-email" class="field" placeholder="tu@correo.com" autocomplete="email" />
+        <input type="password" id="login-password" class="field" placeholder="contraseña" autocomplete="current-password" />
+        <button id="btn-login" class="btn-main" data-i18n="loginBtn">entrar</button>
+        <button id="btn-register" class="btn-ghost" data-i18n="registerBtn">crear cuenta</button>
+        <p id="login-error" class="error-msg"></p>
+      </div>
+
+      <!-- Selector de idioma -->
+      <div class="lang-selector">
+        <button class="lang-btn active" data-lang="es">ES</button>
+        <span class="lang-sep">·</span>
+        <button class="lang-btn" data-lang="en">EN</button>
+        <span class="lang-sep">·</span>
+        <button class="lang-btn" data-lang="it">IT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       PANTALLA DE ESPERA (sin pareja vinculada)
+  ════════════════════════════════════════════ -->
+  <div id="screen-waiting" class="screen hidden">
+    <div class="waiting-wrap">
+      <p class="waiting-hint" data-i18n="waitingTitle">comparte tu código con tu persona</p>
+      <div class="pair-code-box">
+        <span id="my-pair-code" class="pair-code">—</span>
+        <button id="btn-copy-code" class="btn-copy" title="copiar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+      <p class="waiting-sub" data-i18n="waitingOr">o introduce el código de tu pareja</p>
+      <div class="link-row">
+        <input type="text" id="partner-code-input" class="field small" placeholder="código" maxlength="6" />
+        <button id="btn-link" class="btn-link" data-i18n="linkBtn">vincular</button>
+      </div>
+      <p id="link-error" class="error-msg"></p>
+      <button id="btn-logout-wait" class="btn-logout-sm" data-i18n="logout">salir</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       PANTALLA PRINCIPAL
+  ════════════════════════════════════════════ -->
+  <div id="screen-main" class="screen hidden">
+
+    <!-- Fondo de partículas suaves -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Cabecera -->
+    <header class="topbar">
+      <span class="brand-sm">everwith</span>
+      <div class="topbar-right">
+        <div class="lang-selector small">
+          <button class="lang-btn" data-lang="es">ES</button>
+          <span class="lang-sep">·</span>
+          <button class="lang-btn" data-lang="en">EN</button>
+          <span class="lang-sep">·</span>
+          <button class="lang-btn" data-lang="it">IT</button>
+        </div>
+        <button id="btn-logout" class="btn-logout-sm" data-i18n="logout">salir</button>
+      </div>
+    </header>
+
+    <!-- Zona central -->
+    <main class="main-content">
+
+      <!-- PAREJA: avatar + estado -->
+      <section class="partner-zone">
+        <!-- El avatar de la pareja (clickable → toque efímero) -->
+        <div id="partner-avatar-wrap" class="avatar-wrap partner" title="">
+          <div id="partner-avatar" class="avatar partner-avatar">
+            <span id="partner-initials" class="avatar-initials">?</span>
+            <img id="partner-img" class="avatar-img hidden" alt="pareja" />
+          </div>
+          <!-- Ondas del toque efímero (se muestran sólo en la otra persona) -->
+          <div class="ripple-ring r1"></div>
+          <div class="ripple-ring r2"></div>
+          <div class="ripple-ring r3"></div>
+        </div>
+
+        <!-- Estado de la pareja -->
+        <p id="partner-status" class="status-text" data-i18n="noSignal">sin señal reciente 🌙</p>
+      </section>
+
+      <!-- Separador visual sutil -->
+      <div class="divider-line"></div>
+
+      <!-- YO: botón principal + avatar propio -->
+      <section class="self-zone">
+        <!-- Botón principal "Estoy bien" -->
+        <button id="btn-ok" class="btn-ok">
+          <span data-i18n="okBtn">estoy bien ❤️</span>
+        </button>
+
+        <!-- Mi estado enviado -->
+        <p id="my-sent-status" class="my-status-hint hidden" data-i18n="sentOk">enviado ✓</p>
+
+        <!-- Mi avatar (clickable → abrir modal de cambio) -->
+        <div id="my-avatar-wrap" class="avatar-wrap self" title="">
+          <div id="my-avatar" class="avatar self-avatar">
+            <span id="my-initials" class="avatar-initials">yo</span>
+            <img id="my-img" class="avatar-img hidden" alt="yo" />
+          </div>
+          <div class="avatar-edit-hint" data-i18n="changeAvatar">cambiar</div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       MODAL: cambio de avatar
+  ════════════════════════════════════════════ -->
+  <div id="modal-avatar" class="modal-overlay hidden">
+    <div class="modal-card">
+      <p class="modal-title" data-i18n="avatarTitle">tu imagen</p>
+      <div id="avatar-preview" class="avatar-preview-lg">
+        <span id="avatar-preview-initials" class="avatar-initials">yo</span>
+        <img id="avatar-preview-img" class="avatar-img hidden" alt="preview" />
+      </div>
+      <label class="btn-ghost file-label" for="avatar-file-input" data-i18n="choosePhoto">elegir foto</label>
+      <input type="file" id="avatar-file-input" accept="image/*" class="hidden-file" />
+      <button id="btn-save-avatar" class="btn-main sm" data-i18n="save">guardar</button>
+      <button id="btn-cancel-avatar" class="btn-ghost sm" data-i18n="cancel">cancelar</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/realtime.js"></script>
+  <script src="js/avatar.js"></script>
+  <script src="js/background.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
