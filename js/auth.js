@@ -1,6 +1,5 @@
 // ═══════════════════════════════════════════════════
 // everwith — Autenticación
-// Supabase Auth + persistencia de sesión (sin F5 logout)
 // ═══════════════════════════════════════════════════
 
 const SUPABASE_URL = 'https://yiegzkovbqtnkylmttup.supabase.co';
@@ -59,28 +58,21 @@ async function loadOrCreateProfile(userId, email) {
   return profile;
 }
 
-// ─── Escuchar si alguien nos vincula mientras esperamos ───
+// ─── Escuchar si alguien nos vincula (via broadcast, fiable y sin depender de RLS) ───
 function listenForPartnerLink(userId) {
-  const linkChannel = sb.channel(`link:${userId}`)
-    .on(
-      'postgres_changes',
-      {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles',
-        filter: `id=eq.${userId}`,
-      },
-      async (payload) => {
-        const partnerId = payload.new?.partner_id;
-        if (partnerId && !window.authState.profile?.partner_id) {
-          // Nos acaban de vincular — pasar a pantalla principal automáticamente
-          window.authState.profile = payload.new;
-          sb.removeChannel(linkChannel);
-          await window.appCore?.startMain?.();
-          showScreen('main');
-        }
+  const linkChannel = sb.channel(`link:${userId}`, {
+    config: { broadcast: { self: false } },
+  })
+    .on('broadcast', { event: 'linked' }, async (payload) => {
+      const partnerId = payload.payload?.partner_id;
+      if (partnerId && !window.authState.profile?.partner_id) {
+        // Nos acaban de vincular — actualizar estado y pasar a principal
+        window.authState.profile.partner_id = partnerId;
+        sb.removeChannel(linkChannel);
+        await window.appCore?.startMain?.();
+        showScreen('main');
       }
-    )
+    })
     .subscribe();
 }
 
@@ -95,25 +87,21 @@ async function onAuthenticated(user) {
   document.getElementById('my-pair-code').textContent = profile.pair_code;
 
   if (profile.partner_id) {
-    // Ya tiene pareja → pantalla principal directamente
     await window.appCore?.startMain?.();
     showScreen('main');
   } else {
-    // Sin pareja → pantalla de espera + escuchar si alguien nos vincula
     showScreen('waiting');
-    listenForPartnerLink(user.id);
+    listenForPartnerLink(user.id); // Esperar a que alguien nos vincule
   }
 }
 
 // ─── Inicializar: detectar sesión persistida ───
 async function initAuth() {
   const { data: { session } } = await sb.auth.getSession();
-
   if (session?.user) {
     await onAuthenticated(session.user);
     return;
   }
-
   showScreen('login');
 }
 
@@ -199,15 +187,34 @@ document.getElementById('btn-link').addEventListener('click', async () => {
     return;
   }
 
-  // Vincular ambos en la DB
+  // 1. Vincular ambos en la base de datos
   await sb.from('profiles').update({ partner_id: partnerProfile.id }).eq('id', myProfile.id);
   await sb.from('profiles').update({ partner_id: myProfile.id }).eq('id', partnerProfile.id);
 
-  // Actualizar estado local
-  window.authState.profile.partner_id = partnerProfile.id;
+  // 2. Notificar a la otra persona via broadcast
+  //    Nos suscribimos a SU canal y le enviamos el evento "linked"
+  const notifyChannel = sb.channel(`link:${partnerProfile.id}`, {
+    config: { broadcast: { self: false } },
+  });
 
-  // La otra persona lo detecta sola via listenForPartnerLink → pasa a pantalla principal
-  // Nosotros también pasamos directamente
+  await new Promise((resolve) => {
+    notifyChannel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        await notifyChannel.send({
+          type: 'broadcast',
+          event: 'linked',
+          payload: { partner_id: myProfile.id },
+        });
+        resolve();
+      }
+    });
+  });
+
+  // Pequeña espera para asegurar que el mensaje llega antes de limpiar
+  setTimeout(() => sb.removeChannel(notifyChannel), 1500);
+
+  // 3. Actualizar estado local y pasar a pantalla principal
+  window.authState.profile.partner_id = partnerProfile.id;
   await window.appCore?.startMain?.();
   showScreen('main');
 });
