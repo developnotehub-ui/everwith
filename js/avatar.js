@@ -1,9 +1,8 @@
 // ═══════════════════════════════════════════════════
 // everwith — Avatares
-// Cambiar avatar propio + mostrar avatar de pareja
 // ═══════════════════════════════════════════════════
 
-let pendingAvatarDataUrl = null; // Imagen seleccionada, pendiente de guardar
+let pendingAvatarDataUrl = null;
 
 // ─── Renderizar avatar propio ───
 function renderMyAvatar(profile) {
@@ -15,9 +14,7 @@ function renderMyAvatar(profile) {
     imgEl.classList.remove('hidden');
     initialsEl.classList.add('hidden');
   } else {
-    const initials = (profile?.display_name || profile?.email || 'yo')
-      .charAt(0).toUpperCase();
-    initialsEl.textContent = initials;
+    initialsEl.textContent = (profile?.display_name || profile?.email || 'yo').charAt(0).toUpperCase();
     imgEl.classList.add('hidden');
     initialsEl.classList.remove('hidden');
   }
@@ -25,7 +22,6 @@ function renderMyAvatar(profile) {
 
 // ─── Renderizar avatar de la pareja ───
 function renderPartnerAvatar(partnerProfile) {
-  // Guardar en estado para que el status actualizado pueda acceder
   if (partnerProfile) window.authState.partnerProfile = partnerProfile;
 
   const initialsEl = document.getElementById('partner-initials');
@@ -36,9 +32,7 @@ function renderPartnerAvatar(partnerProfile) {
     imgEl.classList.remove('hidden');
     initialsEl.classList.add('hidden');
   } else {
-    const initials = (partnerProfile?.display_name || partnerProfile?.email || '?')
-      .charAt(0).toUpperCase();
-    initialsEl.textContent = initials;
+    initialsEl.textContent = (partnerProfile?.display_name || partnerProfile?.email || '?').charAt(0).toUpperCase();
     imgEl.classList.add('hidden');
     initialsEl.classList.remove('hidden');
   }
@@ -50,8 +44,7 @@ function openAvatarModal() {
   modal.classList.remove('hidden');
   pendingAvatarDataUrl = null;
 
-  // Sync con avatar actual
-  const profile = window.authState.profile;
+  const profile         = window.authState.profile;
   const previewInitials = document.getElementById('avatar-preview-initials');
   const previewImg      = document.getElementById('avatar-preview-img');
 
@@ -75,16 +68,16 @@ function closeAvatarModal() {
 
 // ─── Comprimir imagen a base64 (max 200px) ───
 function compressImage(file) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const MAX = 200;
-      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
-      const canvas = document.createElement('canvas');
+  return new Promise(function(resolve) {
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function() {
+      var MAX = 200;
+      var ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+      var canvas = document.createElement('canvas');
       canvas.width  = img.width  * ratio;
       canvas.height = img.height * ratio;
-      const ctx = canvas.getContext('2d');
+      var ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
       resolve(canvas.toDataURL('image/jpeg', 0.82));
@@ -93,45 +86,39 @@ function compressImage(file) {
   });
 }
 
-// ─── Seleccionar archivo de imagen ───
-document.getElementById('avatar-file-input').addEventListener('change', async (e) => {
-  const file = e.target.files?.[0];
+// ─── Seleccionar archivo ───
+document.getElementById('avatar-file-input').addEventListener('change', async function(e) {
+  var file = e.target.files && e.target.files[0];
   if (!file) return;
 
-  const dataUrl = await compressImage(file);
+  var dataUrl = await compressImage(file);
   pendingAvatarDataUrl = dataUrl;
 
-  // Preview en modal
-  const previewImg      = document.getElementById('avatar-preview-img');
-  const previewInitials = document.getElementById('avatar-preview-initials');
+  var previewImg      = document.getElementById('avatar-preview-img');
+  var previewInitials = document.getElementById('avatar-preview-initials');
   previewImg.src = dataUrl;
   previewImg.classList.remove('hidden');
   previewInitials.classList.add('hidden');
 });
 
 // ─── Guardar avatar ───
-const filePath = `${userId}/avatar.jpg`;
--- const { data } = await sb.storage
---   .from('avatars')
---   .upload(filePath, blob, { upsert: true });
--- const { data: { publicUrl } } = sb.storage
---   .from('avatars')
---   .getPublicUrl(filePath);
--- await sb.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
+document.getElementById('btn-save-avatar').addEventListener('click', async function() {
+  var userId = window.authState && window.authState.user && window.authState.user.id;
+  if (!userId) return;
+
+  var avatarUrl = pendingAvatarDataUrl || (window.authState.profile && window.authState.profile.avatar_url);
 
   if (!avatarUrl) {
     closeAvatarModal();
     return;
   }
 
-  // Guardar en Supabase (como data URL base64 en el perfil)
-  // Nota: para producción real usar Supabase Storage, aquí simplificamos
-  const { error } = await sb
+  var result = await sb
     .from('profiles')
     .update({ avatar_url: avatarUrl })
     .eq('id', userId);
 
-  if (!error) {
+  if (!result.error) {
     window.authState.profile.avatar_url = avatarUrl;
     renderMyAvatar(window.authState.profile);
   }
@@ -142,8 +129,8 @@ const filePath = `${userId}/avatar.jpg`;
 // ─── Cancelar ───
 document.getElementById('btn-cancel-avatar').addEventListener('click', closeAvatarModal);
 
-// ─── Cerrar modal al hacer clic fuera ───
-document.getElementById('modal-avatar').addEventListener('click', (e) => {
+// ─── Cerrar modal al clic fuera ───
+document.getElementById('modal-avatar').addEventListener('click', function(e) {
   if (e.target.id === 'modal-avatar') closeAvatarModal();
 });
 
@@ -151,14 +138,19 @@ document.getElementById('modal-avatar').addEventListener('click', (e) => {
 document.getElementById('my-avatar-wrap').addEventListener('click', openAvatarModal);
 
 // ─── Clic en avatar pareja → toque efímero ───
-document.getElementById('partner-avatar-wrap').addEventListener('click', () => {
-  window.realtimeModule?.sendEphemeralTouch?.();
+document.getElementById('partner-avatar-wrap').addEventListener('click', function() {
+  // Solo funciona si hay pareja vinculada
+  if (!window.authState || !window.authState.profile || !window.authState.profile.partner_id) return;
 
-  // Feedback visual suave en el avatar propio (saber que enviaste)
-  const myAvatar = document.getElementById('my-avatar');
-  myAvatar.style.borderColor = 'rgba(196,160,232,0.5)';
-  setTimeout(() => { myAvatar.style.borderColor = ''; }, 1000);
+  window.realtimeModule && window.realtimeModule.sendEphemeralTouch();
+
+  // Feedback suave en mi avatar al enviar
+  var myAvatar = document.getElementById('my-avatar');
+  if (myAvatar) {
+    myAvatar.style.borderColor = 'rgba(196,160,232,0.5)';
+    setTimeout(function() { myAvatar.style.borderColor = ''; }, 1000);
+  }
 });
 
 // Exponer
-window.avatarModule = { renderMyAvatar, renderPartnerAvatar };
+window.avatarModule = { renderMyAvatar: renderMyAvatar, renderPartnerAvatar: renderPartnerAvatar };
