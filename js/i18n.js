@@ -1,11 +1,11 @@
 // ═══════════════════════════════════════════════════
-// everwith — Sistema i18n
-// Traducciones + detección automática + cambio en vivo
+// everwith — i18n
+// Traducciones ES / EN / IT
 // ═══════════════════════════════════════════════════
 
-const TRANSLATIONS = {
+var TRANSLATIONS = {
   es: {
-    tagline:       'siempre contigo',
+    tagline:       'siempre contigo, sin ruido',
     loginBtn:      'entrar',
     registerBtn:   'crear cuenta',
     logout:        'salir',
@@ -29,7 +29,7 @@ const TRANSLATIONS = {
     ephemeralHint: 'tócale para que lo sienta',
   },
   en: {
-    tagline:       'always with you',
+    tagline:       'always with you, without noise',
     loginBtn:      'enter',
     registerBtn:   'create account',
     logout:        'leave',
@@ -39,7 +39,7 @@ const TRANSLATIONS = {
     isOkay:        'is okay (recently)',
     disconnecting: 'taking a break today 🌿',
     waitingTitle:  'share your code with your person',
-    waitingOr:     'or enter your partner\'s code',
+    waitingOr:     "or enter your partner's code",
     linkBtn:       'connect',
     changeAvatar:  'change',
     avatarTitle:   'your image',
@@ -48,12 +48,12 @@ const TRANSLATIONS = {
     cancel:        'cancel',
     copiedCode:    'copied!',
     linkError:     'code not found',
-    linkSelf:      'that\'s your own code',
+    linkSelf:      "that's your own code",
     alreadyLinked: 'already linked with someone',
     ephemeralHint: 'touch them to let them feel it',
   },
   it: {
-    tagline:       'sempre con te',
+    tagline:       'sempre con te, senza rumore',
     loginBtn:      'entra',
     registerBtn:   'crea account',
     logout:        'esci',
@@ -78,54 +78,68 @@ const TRANSLATIONS = {
   },
 };
 
-// Idioma activo
-let currentLang = 'es';
+var currentLang = 'es';
 
 // ─── Detectar idioma del navegador ───
 function detectLang() {
-  const saved = localStorage.getItem('everwith_lang');
+  var saved = localStorage.getItem('everwith_lang');
   if (saved && TRANSLATIONS[saved]) return saved;
-  const nav = (navigator.language || 'es').toLowerCase();
-  if (nav.startsWith('en')) return 'en';
-  if (nav.startsWith('it')) return 'it';
+  var nav = (navigator.language || 'es').toLowerCase();
+  if (nav.indexOf('en') === 0) return 'en';
+  if (nav.indexOf('it') === 0) return 'it';
   return 'es';
 }
 
-// ─── Aplicar idioma a todos los elementos data-i18n ───
+// ─── Obtener texto traducido ───
+function t(key) {
+  return (TRANSLATIONS[currentLang] || TRANSLATIONS.es)[key] || key;
+}
+
+// ─── Aplicar idioma ───
 function applyLang(lang) {
   if (!TRANSLATIONS[lang]) return;
   currentLang = lang;
   localStorage.setItem('everwith_lang', lang);
 
-  // Actualizar textos
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
+  // Actualizar todos los textos estáticos con data-i18n
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
     if (TRANSLATIONS[lang][key]) el.textContent = TRANSLATIONS[lang][key];
   });
 
-  // Actualizar atributo lang del html
   document.documentElement.lang = lang;
 
   // Marcar botón activo
-  document.querySelectorAll('.lang-btn').forEach(btn => {
+  document.querySelectorAll('.lang-btn').forEach(function(btn) {
     btn.classList.toggle('active', btn.dataset.lang === lang);
   });
+
+  // ─── Re-renderizar estado dinámico de la pareja ───
+  // Usa los datos reales del ok_at — NO sobreescribe con texto fijo
+  var mainScreen = document.getElementById('screen-main');
+  if (mainScreen && !mainScreen.classList.contains('hidden')) {
+    var okAt = window.authState
+      && window.authState.partnerProfile
+      && window.authState.partnerProfile.ok_at;
+
+    var statusEl = document.getElementById('partner-status');
+    if (statusEl && window.realtimeModule && window.realtimeModule.formatPartnerStatus) {
+      // Recalcula el texto con el nuevo idioma usando el dato real
+      statusEl.textContent = window.realtimeModule.formatPartnerStatus(okAt);
+    }
+  }
 }
 
-// ─── Obtener texto traducido por clave ───
-function t(key) {
-  return (TRANSLATIONS[currentLang] || TRANSLATIONS.es)[key] || key;
-}
-
-// ─── Inicializar y conectar botones de idioma ───
+// ─── Inicializar ───
 function initI18n() {
-  const lang = detectLang();
+  var lang = detectLang();
   applyLang(lang);
 
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    btn.addEventListener('click', () => applyLang(btn.dataset.lang));
+  document.querySelectorAll('.lang-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      applyLang(btn.dataset.lang);
+    });
   });
 }
 
-// Exponer globalmente
-window.i18n = { applyLang, t, initI18n };
+window.i18n = { applyLang: applyLang, t: t, initI18n: initI18n };
