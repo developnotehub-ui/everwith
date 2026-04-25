@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════
 // everwith — Realtime
-// Estado + toque efímero con ondas de pantalla completa
+// Estado + toque efímero con ondas JS (fiable)
 // ═══════════════════════════════════════════════════
 
 var realtimeChannel = null;
@@ -15,38 +15,54 @@ function formatPartnerStatus(okAt) {
   return window.i18n.t('noSignal');
 }
 
-// ─── Actualizar texto en la UI ───
 function renderPartnerStatus(okAt) {
   var el = document.getElementById('partner-status');
   if (el) el.textContent = formatPartnerStatus(okAt);
 }
 
-// ─── Animación de ondas en el avatar (pequeña, sobre el avatar) ───
-function triggerAvatarRipple() {
-  var wrap = document.getElementById('partner-avatar-wrap');
-  if (!wrap) return;
-  wrap.classList.remove('rippling');
-  void wrap.offsetWidth;
-  wrap.classList.add('rippling');
-  setTimeout(function() { wrap.classList.remove('rippling'); }, 2500);
-}
-
-// ─── Animación de ondas a pantalla completa (quien recibe el toque) ───
+// ─── Animación de ondas a pantalla completa ───
+// Crea elementos <div> dinámicamente en JS para evitar
+// el problema del reflow con clases CSS + display:none
 function triggerFullScreenRipple() {
-  var overlay = document.getElementById('touch-ripple-overlay');
-  if (!overlay) return;
+  var container = document.getElementById('screen-main');
+  if (!container) return;
 
-  // Reset
-  overlay.classList.remove('hidden', 'playing');
-  void overlay.offsetWidth;
+  var delays = [0, 400, 800, 1200];
 
-  overlay.classList.add('playing');
+  delays.forEach(function(delay) {
+    setTimeout(function() {
+      var ring = document.createElement('div');
+      ring.style.cssText = [
+        'position:fixed',
+        'top:50%',
+        'left:50%',
+        'width:10px',
+        'height:10px',
+        'margin-top:-5px',
+        'margin-left:-5px',
+        'border-radius:50%',
+        'border:1.5px solid rgba(196,160,232,0.7)',
+        'pointer-events:none',
+        'z-index:999',
+        'transform:scale(1)',
+        'opacity:0.8',
+        'transition:none',
+      ].join(';');
 
-  // Ocultar tras la animación (la más larga es tw4 = 1.2s delay + 2.4s = 3.6s)
-  setTimeout(function() {
-    overlay.classList.remove('playing');
-    overlay.classList.add('hidden');
-  }, 4000);
+      document.body.appendChild(ring);
+
+      // Forzar reflow antes de iniciar la transición
+      void ring.offsetWidth;
+
+      ring.style.transition = 'transform 2.2s cubic-bezier(0.1,0.6,0.3,1), opacity 2.2s ease-out';
+      ring.style.transform  = 'scale(' + (Math.max(window.innerWidth, window.innerHeight) * 0.22) + ')';
+      ring.style.opacity    = '0';
+
+      setTimeout(function() {
+        if (ring.parentNode) ring.parentNode.removeChild(ring);
+      }, 2400);
+    }, delay);
+  });
 }
 
 // ─── Inicializar canal Realtime ───
@@ -60,8 +76,9 @@ function initRealtime(myUserId, partnerId) {
     config: { broadcast: { self: false } },
   });
 
-  // Toque efímero — quien lo recibe ve las ondas a pantalla completa
+  // Toque efímero recibido → ondas en pantalla
   realtimeChannel.on('broadcast', { event: 'ephemeral_touch' }, function() {
+    console.log('Toque efímero recibido ✓');
     triggerFullScreenRipple();
   });
 
@@ -81,7 +98,6 @@ function initRealtime(myUserId, partnerId) {
       if (window.authState.partnerProfile) {
         window.authState.partnerProfile.ok_at = newOkAt;
       }
-
       renderPartnerStatus(newOkAt);
 
       if (newAvatar && window.avatarModule) {
@@ -90,26 +106,29 @@ function initRealtime(myUserId, partnerId) {
     }
   );
 
-  realtimeChannel.subscribe();
+  realtimeChannel.subscribe(function(status) {
+    console.log('Canal realtime:', status);
+  });
 
-  // Re-renderizar texto relativo cada minuto
   statusUpdateInterval = setInterval(function() {
     var okAt = window.authState && window.authState.partnerProfile && window.authState.partnerProfile.ok_at;
     renderPartnerStatus(okAt);
   }, 60000);
 }
 
-// ─── Enviar toque efímero (broadcast, sin persistencia) ───
+// ─── Enviar toque efímero ───
 async function sendEphemeralTouch() {
   if (!realtimeChannel) {
-    console.warn('Sin canal realtime');
+    console.warn('Sin canal realtime — no se puede enviar toque');
     return;
   }
-  await realtimeChannel.send({
+  console.log('Enviando toque efímero...');
+  var result = await realtimeChannel.send({
     type: 'broadcast',
     event: 'ephemeral_touch',
     payload: {},
   });
+  console.log('Resultado envío:', result);
 }
 
 // ─── Enviar "estoy bien" ───
@@ -136,7 +155,6 @@ async function sendOkStatus() {
   }
 }
 
-// ─── Limpiar ───
 function cleanup() {
   if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
   if (statusUpdateInterval) { clearInterval(statusUpdateInterval); statusUpdateInterval = null; }
