@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>everwith</title>
+  <!-- Favicon inline — elimina el 404 -->
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBkMGYxYSIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtc3R5bGU9Iml0YWxpYyIgCiAgICAgICAgZmlsbD0iI2M0YTBlOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+ZTwvdGV4dD4KPC9zdmc+" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet" />
@@ -11,16 +13,13 @@
 </head>
 <body>
 
-  <!-- ════════════════════════════════════════════
-       PANTALLA DE LOGIN
-  ════════════════════════════════════════════ -->
+  <!-- LOGIN -->
   <div id="screen-login" class="screen">
     <div class="login-wrap">
       <div class="brand">
         <span class="brand-name">everwith</span>
         <span class="brand-tagline" data-i18n="tagline">siempre contigo, sin ruido</span>
       </div>
-
       <div class="login-form">
         <input type="email" id="login-email" class="field" placeholder="tu@correo.com" autocomplete="email" />
         <input type="password" id="login-password" class="field" placeholder="contraseña" autocomplete="current-password" />
@@ -28,8 +27,6 @@
         <button id="btn-register" class="btn-ghost" data-i18n="registerBtn">crear cuenta</button>
         <p id="login-error" class="error-msg"></p>
       </div>
-
-      <!-- Selector de idioma -->
       <div class="lang-selector">
         <button class="lang-btn active" data-lang="es">ES</button>
         <span class="lang-sep">·</span>
@@ -40,9 +37,7 @@
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════════
-       PANTALLA DE ESPERA (sin pareja vinculada)
-  ════════════════════════════════════════════ -->
+  <!-- ESPERA -->
   <div id="screen-waiting" class="screen hidden">
     <div class="waiting-wrap">
       <p class="waiting-hint" data-i18n="waitingTitle">comparte tu código con tu persona</p>
@@ -62,15 +57,10 @@
     </div>
   </div>
 
-  <!-- ════════════════════════════════════════════
-       PANTALLA PRINCIPAL
-  ════════════════════════════════════════════ -->
+  <!-- PRINCIPAL -->
   <div id="screen-main" class="screen hidden">
-
-    <!-- Fondo de partículas suaves -->
     <canvas id="bg-canvas"></canvas>
 
-    <!-- Cabecera -->
     <header class="topbar">
       <span class="brand-sm">everwith</span>
       <div class="topbar-right">
@@ -85,41 +75,29 @@
       </div>
     </header>
 
-    <!-- Zona central -->
     <main class="main-content">
-
-      <!-- PAREJA: avatar + estado -->
+      <!-- Pareja -->
       <section class="partner-zone">
-        <!-- El avatar de la pareja (clickable → toque efímero) -->
         <div id="partner-avatar-wrap" class="avatar-wrap partner" title="">
           <div id="partner-avatar" class="avatar partner-avatar">
             <span id="partner-initials" class="avatar-initials">?</span>
             <img id="partner-img" class="avatar-img hidden" alt="pareja" />
           </div>
-          <!-- Ondas del toque efímero (se muestran sólo en la otra persona) -->
           <div class="ripple-ring r1"></div>
           <div class="ripple-ring r2"></div>
           <div class="ripple-ring r3"></div>
         </div>
-
-        <!-- Estado de la pareja -->
         <p id="partner-status" class="status-text" data-i18n="noSignal">sin señal reciente 🌙</p>
       </section>
 
-      <!-- Separador visual sutil -->
       <div class="divider-line"></div>
 
-      <!-- YO: botón principal + avatar propio -->
+      <!-- Yo -->
       <section class="self-zone">
-        <!-- Botón principal "Estoy bien" -->
         <button id="btn-ok" class="btn-ok">
           <span data-i18n="okBtn">estoy bien ❤️</span>
         </button>
-
-        <!-- Mi estado enviado -->
         <p id="my-sent-status" class="my-status-hint hidden" data-i18n="sentOk">enviado ✓</p>
-
-        <!-- Mi avatar (clickable → abrir modal de cambio) -->
         <div id="my-avatar-wrap" class="avatar-wrap self" title="">
           <div id="my-avatar" class="avatar self-avatar">
             <span id="my-initials" class="avatar-initials">yo</span>
@@ -128,20 +106,44 @@
           <div class="avatar-edit-hint" data-i18n="changeAvatar">cambiar</div>
         </div>
       </section>
-
     </main>
+
+    <!-- ══ Overlay de toque efímero (cubre toda la pantalla) ══ -->
+    <div id="touch-ripple-overlay" class="touch-ripple-overlay hidden">
+      <div class="touch-wave tw1"></div>
+      <div class="touch-wave tw2"></div>
+      <div class="touch-wave tw3"></div>
+      <div class="touch-wave tw4"></div>
+    </div>
   </div>
 
-  <!-- ════════════════════════════════════════════
-       MODAL: cambio de avatar
-  ════════════════════════════════════════════ -->
+  <!-- MODAL AVATAR CON CROP -->
   <div id="modal-avatar" class="modal-overlay hidden">
-    <div class="modal-card">
+    <div class="modal-card crop-card">
       <p class="modal-title" data-i18n="avatarTitle">tu imagen</p>
+
+      <!-- Estado inicial: preview circular -->
       <div id="avatar-preview" class="avatar-preview-lg">
         <span id="avatar-preview-initials" class="avatar-initials">yo</span>
         <img id="avatar-preview-img" class="avatar-img hidden" alt="preview" />
       </div>
+
+      <!-- Crop (se muestra tras elegir foto) -->
+      <div id="crop-container" class="crop-container hidden">
+        <div class="crop-viewport" id="crop-viewport">
+          <div id="crop-image-wrap" class="crop-image-wrap">
+            <img id="crop-img" class="crop-img" alt="" draggable="false" />
+          </div>
+          <div class="crop-circle-guide"></div>
+        </div>
+        <p class="crop-hint" data-i18n="cropHint">arrastra · pellizca · desliza para zoom</p>
+        <div class="zoom-row">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M8 11h6"/></svg>
+          <input type="range" id="crop-zoom" class="crop-zoom-slider" min="1" max="3" step="0.01" value="1" />
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg>
+        </div>
+      </div>
+
       <label class="btn-ghost file-label" for="avatar-file-input" data-i18n="choosePhoto">elegir foto</label>
       <input type="file" id="avatar-file-input" accept="image/*" class="hidden-file" />
       <button id="btn-save-avatar" class="btn-main sm" data-i18n="save">guardar</button>
@@ -149,7 +151,6 @@
     </div>
   </div>
 
-  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/auth.js"></script>
