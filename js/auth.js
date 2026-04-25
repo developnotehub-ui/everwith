@@ -14,11 +14,7 @@ const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 window.sb = _sb;
-
-window.authState = {
-  user: null,
-  profile: null,
-};
+window.authState = { user: null, profile: null };
 
 // ─── Mostrar/ocultar pantallas ───
 function showScreen(name) {
@@ -55,10 +51,32 @@ async function loadOrCreateProfile(userId, email) {
     profile = newProfile;
   }
 
+  // ─── Auto-reparar vínculo roto ───
+  // Si mi partner_id es null pero alguien en la DB me tiene como su pareja,
+  // significa que el vínculo quedó a medias. Lo reparamos automáticamente.
+  if (!profile.partner_id) {
+    const { data: partner } = await sb
+      .from('profiles')
+      .select('*')
+      .eq('partner_id', userId)
+      .single();
+
+    if (partner) {
+      // Alguien nos tiene vinculados — restaurar nuestro lado
+      await sb
+        .from('profiles')
+        .update({ partner_id: partner.id })
+        .eq('id', userId);
+
+      profile.partner_id = partner.id;
+      console.log('Vínculo auto-reparado con:', partner.display_name);
+    }
+  }
+
   return profile;
 }
 
-// ─── Escuchar si alguien nos vincula (via broadcast, fiable y sin depender de RLS) ───
+// ─── Escuchar si alguien nos vincula mientras esperamos ───
 function listenForPartnerLink(userId) {
   const linkChannel = sb.channel(`link:${userId}`, {
     config: { broadcast: { self: false } },
@@ -66,7 +84,6 @@ function listenForPartnerLink(userId) {
     .on('broadcast', { event: 'linked' }, async (payload) => {
       const partnerId = payload.payload?.partner_id;
       if (partnerId && !window.authState.profile?.partner_id) {
-        // Nos acaban de vincular — actualizar estado y pasar a principal
         window.authState.profile.partner_id = partnerId;
         sb.removeChannel(linkChannel);
         await window.appCore?.startMain?.();
@@ -91,7 +108,7 @@ async function onAuthenticated(user) {
     showScreen('main');
   } else {
     showScreen('waiting');
-    listenForPartnerLink(user.id); // Esperar a que alguien nos vincule
+    listenForPartnerLink(user.id);
   }
 }
 
@@ -191,9 +208,7 @@ document.getElementById('btn-link').addEventListener('click', async () => {
   await sb.from('profiles').update({ partner_id: partnerProfile.id }).eq('id', myProfile.id);
   await sb.from('profiles').update({ partner_id: myProfile.id }).eq('id', partnerProfile.id);
 
-  // 2. Enviar broadcast al canal de la otra persona
-  //    Reintentamos hasta 5 veces con 600ms entre intentos
-  //    para asegurar que el mensaje llega aunque la suscripción tarde
+  // 2. Notificar a la otra persona via broadcast con reintentos
   const notifyChannel = sb.channel(`link:${partnerProfile.id}`, {
     config: { broadcast: { self: false } },
   });
