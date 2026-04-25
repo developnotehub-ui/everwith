@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════
-// everwith — Avatares con Crop
+// everwith — Avatares con Crop 
 // Drag + zoom slider + pinch-to-zoom (móvil)
 // ═══════════════════════════════════════════════════
 
