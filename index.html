@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>everwith</title>
-  <!-- Favicon inline — elimina el 404 -->
   <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzBkMGYxYSIvPgogIDx0ZXh0IHg9IjE2IiB5PSIyMiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZvbnQtc3R5bGU9Iml0YWxpYyIgCiAgICAgICAgZmlsbD0iI2M0YTBlOCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+ZTwvdGV4dD4KPC9zdmc+" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,37 +12,65 @@
 </head>
 <body>
 
+  <canvas id="bg-canvas"></canvas>
+
   <!-- LOGIN -->
   <div id="screen-login" class="screen">
-    <div class="login-wrap">
-      <div class="brand">
-        <span class="brand-name">everwith</span>
-        <span class="brand-tagline" data-i18n="tagline">siempre contigo, sin ruido</span>
+  <div class="login-wrap">
+    <div class="brand">
+      <span class="brand-name">everwith</span>
+      <span class="brand-tagline" data-i18n="tagline">siempre contigo, sin ruido</span>
+    </div>
+
+    <div class="auth-card glass-card">
+      <div class="auth-tabs">
+        <button id="tab-login" class="auth-tab active" data-i18n="loginTab">entrar</button>
+        <button id="tab-register" class="auth-tab" data-i18n="registerTab">registro</button>
       </div>
-      <div class="login-form">
-        <input type="email" id="login-email" class="field" placeholder="tu@correo.com" autocomplete="email" />
-        <input type="password" id="login-password" class="field" placeholder="contraseña" autocomplete="current-password" />
+
+      <div id="form-login" class="login-form">
+        <input type="email" id="login-email" class="field" 
+               data-i18n-placeholder="emailPlaceholder" placeholder="tu@correo.com" autocomplete="email" />
+        
+        <input type="password" id="login-password" class="field" 
+               data-i18n-placeholder="passwordPlaceholder" placeholder="contraseña" autocomplete="current-password" />
+        
         <button id="btn-login" class="btn-main" data-i18n="loginBtn">entrar</button>
-        <button id="btn-register" class="btn-ghost" data-i18n="registerBtn">crear cuenta</button>
         <p id="login-error" class="error-msg"></p>
       </div>
-      <div class="lang-selector">
-        <button class="lang-btn active" data-lang="es">ES</button>
-        <span class="lang-sep">·</span>
-        <button class="lang-btn" data-lang="en">EN</button>
-        <span class="lang-sep">·</span>
-        <button class="lang-btn" data-lang="it">IT</button>
+
+      <div id="form-register" class="login-form hidden">
+        <input type="email" id="reg-email" class="field" 
+               data-i18n-placeholder="emailPlaceholder" placeholder="tu@correo.com" autocomplete="email" />
+        
+        <input type="password" id="reg-password" class="field" 
+               data-i18n-placeholder="passwordPlaceholder" placeholder="contraseña" autocomplete="new-password" />
+        
+        <input type="password" id="reg-password2" class="field" 
+               data-i18n-placeholder="repeatPasswordPlaceholder" placeholder="repetir contraseña" autocomplete="new-password" />
+        
+        <button id="btn-register" class="btn-main" data-i18n="registerBtn">crear cuenta</button>
+        <p id="register-error" class="error-msg"></p>
       </div>
     </div>
+
+    <div class="lang-selector">
+      <button class="lang-btn active" data-lang="es">ES</button>
+      <span class="lang-sep">·</span>
+      <button class="lang-btn" data-lang="en">EN</button>
+      <span class="lang-sep">·</span>
+      <button class="lang-btn" data-lang="it">IT</button>
+    </div>
   </div>
+</div>
 
   <!-- ESPERA -->
   <div id="screen-waiting" class="screen hidden">
-    <div class="waiting-wrap">
+    <div class="waiting-wrap glass-card">
       <p class="waiting-hint" data-i18n="waitingTitle">comparte tu código con tu persona</p>
       <div class="pair-code-box">
         <span id="my-pair-code" class="pair-code">—</span>
-        <button id="btn-copy-code" class="btn-copy" title="copiar">
+        <button id="btn-copy-code" class="btn-copy">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
         </button>
       </div>
@@ -59,7 +86,6 @@
 
   <!-- PRINCIPAL -->
   <div id="screen-main" class="screen hidden">
-    <canvas id="bg-canvas"></canvas>
 
     <header class="topbar">
       <span class="brand-sm">everwith</span>
@@ -76,65 +102,61 @@
     </header>
 
     <main class="main-content">
-      <!-- Pareja -->
-      <section class="partner-zone">
-        <div id="partner-avatar-wrap" class="avatar-wrap partner" title="">
-          <div id="partner-avatar" class="avatar partner-avatar">
-            <span id="partner-initials" class="avatar-initials">?</span>
-            <img id="partner-img" class="avatar-img hidden" alt="pareja" />
-          </div>
-          <div class="ripple-ring r1"></div>
-          <div class="ripple-ring r2"></div>
-          <div class="ripple-ring r3"></div>
-        </div>
-        <p id="partner-status" class="status-text" data-i18n="noSignal">sin señal reciente 🌙</p>
-      </section>
+      <div class="center-block">
 
-      <div class="divider-line"></div>
-
-      <!-- Yo -->
-      <section class="self-zone">
-        <button id="btn-ok" class="btn-ok">
-          <span data-i18n="okBtn">estoy bien ❤️</span>
-        </button>
-        <p id="my-sent-status" class="my-status-hint hidden" data-i18n="sentOk">enviado ✓</p>
-        <div id="my-avatar-wrap" class="avatar-wrap self" title="">
-          <div id="my-avatar" class="avatar self-avatar">
-            <span id="my-initials" class="avatar-initials">yo</span>
-            <img id="my-img" class="avatar-img hidden" alt="yo" />
+        <section class="partner-zone">
+          <div id="partner-avatar-wrap" class="avatar-wrap partner">
+            <div class="avatar-aura"></div>
+            <div class="avatar-ring-outer"></div>
+            <div id="partner-avatar" class="avatar partner-avatar">
+              <span id="partner-initials" class="avatar-initials">?</span>
+              <img id="partner-img" class="avatar-img hidden" alt="pareja" />
+            </div>
+            <div class="ripple-ring r1"></div>
+            <div class="ripple-ring r2"></div>
+            <div class="ripple-ring r3"></div>
           </div>
-          <div class="avatar-edit-hint" data-i18n="changeAvatar">cambiar</div>
-        </div>
-      </section>
+          <p id="partner-status" class="status-text" data-i18n="noSignal">hoy está desconectando 🌱</p>
+        </section>
+
+        <section class="btn-zone">
+          <button id="btn-ok" class="btn-ok">
+            <span data-i18n="okBtn">estoy bien ❤️</span>
+          </button>
+          <p id="my-sent-status" class="my-status-hint hidden" data-i18n="sentOk">enviado ✓</p>
+        </section>
+
+      </div>
     </main>
 
-    <!-- ══ Overlay de toque efímero (cubre toda la pantalla) ══ -->
-    <div id="touch-ripple-overlay" class="touch-ripple-overlay hidden">
-      <div class="touch-wave tw1"></div>
-      <div class="touch-wave tw2"></div>
-      <div class="touch-wave tw3"></div>
-      <div class="touch-wave tw4"></div>
+    <!-- Avatar propio — esquina inferior derecha -->
+    <div id="my-avatar-corner" class="my-avatar-corner">
+      <div id="my-avatar-wrap" class="avatar-wrap self">
+        <div id="my-avatar" class="avatar self-avatar">
+          <span id="my-initials" class="avatar-initials">yo</span>
+          <img id="my-img" class="avatar-img hidden" alt="yo" />
+        </div>
+        <div class="avatar-edit-badge">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+      </div>
     </div>
+
   </div>
 
-  <!-- MODAL AVATAR CON CROP -->
+  <!-- MODAL AVATAR + CROP -->
   <div id="modal-avatar" class="modal-overlay hidden">
     <div class="modal-card crop-card">
       <p class="modal-title" data-i18n="avatarTitle">tu imagen</p>
-
-      <!-- Estado inicial: preview circular -->
       <div id="avatar-preview" class="avatar-preview-lg">
         <span id="avatar-preview-initials" class="avatar-initials">yo</span>
         <img id="avatar-preview-img" class="avatar-img hidden" alt="preview" />
       </div>
-
-      <!-- Crop (se muestra tras elegir foto) -->
       <div id="crop-container" class="crop-container hidden">
         <div class="crop-viewport" id="crop-viewport">
           <div id="crop-image-wrap" class="crop-image-wrap">
             <img id="crop-img" class="crop-img" alt="" draggable="false" />
           </div>
-          <div class="crop-circle-guide"></div>
         </div>
         <p class="crop-hint" data-i18n="cropHint">arrastra · pellizca · desliza para zoom</p>
         <div class="zoom-row">
@@ -143,7 +165,6 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg>
         </div>
       </div>
-
       <label class="btn-ghost file-label" for="avatar-file-input" data-i18n="choosePhoto">elegir foto</label>
       <input type="file" id="avatar-file-input" accept="image/*" class="hidden-file" />
       <button id="btn-save-avatar" class="btn-main sm" data-i18n="save">guardar</button>
