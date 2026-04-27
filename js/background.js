@@ -182,3 +182,4 @@ window.initBackground = initBackground;
 
 // Arrancar inmediatamente — el canvas está siempre en el DOM
 initBackground();
+
