@@ -233,30 +233,58 @@ function extractCrop() {
 
   return canvas.toDataURL('image/jpeg', 0.88);
 }
-
 // ─── Guardar ───
 document.getElementById('btn-save-avatar').addEventListener('click', async function() {
   var userId = window.authState && window.authState.user && window.authState.user.id;
   if (!userId) return;
 
-  var avatarUrl;
   var cropVisible = !document.getElementById('crop-container').classList.contains('hidden');
 
+  // Si no hay crop activo, cerrar sin cambios
+  if (!cropVisible) { closeAvatarModal(); return; }
+
+  var dataUrl;
   try {
-    avatarUrl = cropVisible
-      ? extractCrop()
-      : (window.authState.profile && window.authState.profile.avatar_url);
+    dataUrl = extractCrop();
   } catch(err) {
     console.error('Error en extractCrop:', err);
     closeAvatarModal();
     return;
   }
 
-  if (!avatarUrl) { closeAvatarModal(); return; }
+  if (!dataUrl) { closeAvatarModal(); return; }
 
-  var result = await sb.from('profiles').update({ avatar_url: avatarUrl }).eq('id', userId);
-  if (!result.error) {
-    window.authState.profile.avatar_url = avatarUrl;
+  // Convertir dataURL a Blob
+  var res = await fetch(dataUrl);
+  var blob = await res.blob();
+
+  // Subir a Supabase Storage
+  var filePath = userId + '/avatar.jpg';
+  var { error: uploadError } = await sb.storage
+    .from('avatars')
+    .upload(filePath, blob, { upsert: true, contentType: 'image/jpeg' });
+
+  if (uploadError) {
+    console.error('Error subiendo avatar:', uploadError);
+    closeAvatarModal();
+    return;
+  }
+
+  // Obtener URL pública
+  var { data: urlData } = sb.storage
+    .from('avatars')
+    .getPublicUrl(filePath);
+
+  var publicUrl = urlData.publicUrl + '?t=' + Date.now(); // cache-bust
+
+  // Guardar URL en el perfil (ya no base64)
+  var { error: updateError } = await sb
+    .from('profiles')
+    .update({ avatar_url: publicUrl })
+    .eq('id', userId);
+
+  if (!updateError) {
+    window.authState.profile.avatar_url = publicUrl;
     renderMyAvatar(window.authState.profile);
   }
 
