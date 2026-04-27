@@ -1,6 +1,6 @@
 // ═══════════════════════════════════════════════════
 // everwith — Autenticación
-// ═══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════  
 
 const SUPABASE_URL = 'https://yiegzkovbqtnkylmttup.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpZWd6a292YnF0bmt5bG10dHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5OTA3NjYsImV4cCI6MjA5MjU2Njc2Nn0.WA1Uf6QafqJISwqmoYPaJZQLpGqYOCg0-1nByIax6D4';
