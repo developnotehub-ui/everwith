@@ -5,7 +5,7 @@
 
 var TRANSLATIONS = {
   es: {
-    tagline:       'siempre contigo, sin ruido',
+    tagline:       'Siempre contigo',
     loginBtn:      'entrar',
     registerBtn:   'crear cuenta',
     logout:        'salir',
@@ -26,10 +26,19 @@ var TRANSLATIONS = {
     linkError:     'código no encontrado',
     linkSelf:      'ese es tu propio código',
     alreadyLinked: 'ya tienes pareja vinculada',
-    ephemeralHint: 'tócale para que lo sienta',
+    ephemeralHint: 'pensando en ti',
+	cropHint: "arrastra · pellizca · desliza para zoom",
+    loginTab: "entrar",
+    registerTab: "registro",
+    loginBtn: "entrar",
+    registerBtn: "crear cuenta",
+    // Placeholders
+    emailPlaceholder: "tu@correo.com",
+    passwordPlaceholder: "contraseña",
+    repeatPasswordPlaceholder: "repetir contraseña"
   },
   en: {
-    tagline:       'always with you, without noise',
+    tagline:       'Always with you',
     loginBtn:      'enter',
     registerBtn:   'create account',
     logout:        'leave',
@@ -50,10 +59,19 @@ var TRANSLATIONS = {
     linkError:     'code not found',
     linkSelf:      "that's your own code",
     alreadyLinked: 'already linked with someone',
-    ephemeralHint: 'touch them to let them feel it',
+    ephemeralHint: 'thinking of you',
+	cropHint: "drag · pinch · slide to zoom",
+    loginTab: "login",
+    registerTab: "register",
+    loginBtn: "sign in",
+    registerBtn: "create account",
+    // Placeholders
+    emailPlaceholder: "your@email.com",
+    passwordPlaceholder: "password",
+    repeatPasswordPlaceholder: "repeat password"
   },
   it: {
-    tagline:       'sempre con te, senza rumore',
+    tagline:       'Sempre con te',
     loginBtn:      'entra',
     registerBtn:   'crea account',
     logout:        'esci',
@@ -74,7 +92,16 @@ var TRANSLATIONS = {
     linkError:     'codice non trovato',
     linkSelf:      'è il tuo stesso codice',
     alreadyLinked: 'hai già un partner collegato',
-    ephemeralHint: 'toccalo perché lo senta',
+    ephemeralHint: 'ti sto pensando',
+	cropHint: "trascina · pizzica · scorri per zoom",
+    loginTab: "accedi",
+    registerTab: "registrati",
+    loginBtn: "entra",
+    registerBtn: "crea account",
+    // Placeholders
+    emailPlaceholder: "tua@email. com",
+    passwordPlaceholder: "password",
+    repeatPasswordPlaceholder: "ripeti password"
   },
 };
 
@@ -94,17 +121,24 @@ function detectLang() {
 function t(key) {
   return (TRANSLATIONS[currentLang] || TRANSLATIONS.es)[key] || key;
 }
-
 // ─── Aplicar idioma ───
 function applyLang(lang) {
   if (!TRANSLATIONS[lang]) return;
   currentLang = lang;
   localStorage.setItem('everwith_lang', lang);
 
-  // Actualizar todos los textos estáticos con data-i18n
+  // 1. Actualizar textos estáticos (textContent)
   document.querySelectorAll('[data-i18n]').forEach(function(el) {
     var key = el.getAttribute('data-i18n');
     if (TRANSLATIONS[lang][key]) el.textContent = TRANSLATIONS[lang][key];
+  });
+
+  // 2. ACTUALIZAR PLACEHOLDERS (Esto es lo que faltaba)
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    if (TRANSLATIONS[lang][key]) {
+      el.setAttribute('placeholder', TRANSLATIONS[lang][key]);
+    }
   });
 
   document.documentElement.lang = lang;
@@ -115,21 +149,18 @@ function applyLang(lang) {
   });
 
   // ─── Re-renderizar estado dinámico de la pareja ───
-  // Usa los datos reales del ok_at — NO sobreescribe con texto fijo
   var mainScreen = document.getElementById('screen-main');
   if (mainScreen && !mainScreen.classList.contains('hidden')) {
-    var okAt = window.authState
-      && window.authState.partnerProfile
-      && window.authState.partnerProfile.ok_at;
+    var okAt = window.authState &&
+               window.authState.partnerProfile &&
+               window.authState.partnerProfile.ok_at;
 
     var statusEl = document.getElementById('partner-status');
     if (statusEl && window.realtimeModule && window.realtimeModule.formatPartnerStatus) {
-      // Recalcula el texto con el nuevo idioma usando el dato real
       statusEl.textContent = window.realtimeModule.formatPartnerStatus(okAt);
     }
   }
 }
-
 // ─── Inicializar ───
 function initI18n() {
   var lang = detectLang();
