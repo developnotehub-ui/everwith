@@ -139,12 +139,14 @@ document.getElementById('btn-login').addEventListener('click', async () => {
 
 // ─── REGISTRO ───
 document.getElementById('btn-register').addEventListener('click', async () => {
-  const email    = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  const errEl    = document.getElementById('login-error');
+  const email    = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const password2 = document.getElementById('reg-password2').value;
+  const errEl    = document.getElementById('register-error');
   errEl.textContent = '';
 
-  if (!email || !password) { errEl.textContent = 'completa todos los campos'; return; }
+  if (!email || !password || !password2) { errEl.textContent = 'completa todos los campos'; return; }
+  if (password !== password2) { errEl.textContent = 'las contraseñas no coinciden'; return; }
 
   const { data, error } = await sb.auth.signUp({ email, password });
   if (error) { errEl.textContent = error.message; return; }
@@ -154,6 +156,21 @@ document.getElementById('btn-register').addEventListener('click', async () => {
   } else {
     errEl.textContent = 'revisa tu email para confirmar tu cuenta';
   }
+});
+
+// ─── TABS LOGIN / REGISTRO ───
+document.getElementById('tab-login').addEventListener('click', () => {
+  document.getElementById('tab-login').classList.add('active');
+  document.getElementById('tab-register').classList.remove('active');
+  document.getElementById('form-login').classList.remove('hidden');
+  document.getElementById('form-register').classList.add('hidden');
+});
+
+document.getElementById('tab-register').addEventListener('click', () => {
+  document.getElementById('tab-register').classList.add('active');
+  document.getElementById('tab-login').classList.remove('active');
+  document.getElementById('form-register').classList.remove('hidden');
+  document.getElementById('form-login').classList.add('hidden');
 });
 
 // ─── LOGOUT ───
